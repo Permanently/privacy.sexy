@@ -9,6 +9,14 @@ module.exports = {
             alias: {  // also requires path alias in tsconfig.json
               "@tests": require('path').resolve(__dirname, 'tests/'),
             },
+            fallback: {
+              // Ignore following without polyfilling them, node.js core modules are never used for browser code
+              // but only desktop. We can let
+              'os': false,
+              'child_process': false,
+              'fs': false,
+              'path': false,
+            }
         },
     },
     pluginOptions: {

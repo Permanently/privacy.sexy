@@ -1,0 +1,4 @@
+- npm run test:unit ✅.
+- npm run serve ✅.
+- npm run electron:serve ❌
+- npm run electron:build ❌
