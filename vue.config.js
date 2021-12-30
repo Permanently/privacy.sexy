@@ -9,7 +9,16 @@ module.exports = {
             alias: {  // also requires path alias in tsconfig.json
               "@tests": require('path').resolve(__dirname, 'tests/'),
             },
+            fallback: {
+              // Tell webpack to ignore polyfilling them because Node core modules are never used for browser code
+              // but only for desktop where Electron supports them.
+              'os': false,
+              'child_process': false,
+              'fs': false,
+              'path': false,
+            }
         },
+        externals: ['fsevents'], // Fixes failing compilation when running unit tests run on macOS
     },
     pluginOptions: {
         // https://nklayman.github.io/vue-cli-plugin-electron-builder/guide/guide.html#native-modules
@@ -34,8 +43,8 @@ module.exports = {
                 linux: { // https://www.electron.build/configuration/linux
                     target: 'AppImage',
                 }
-            }
-        }
+            },
+        },
     },
 }
 
