@@ -1,9 +1,6 @@
-import { SelectedScript } from '@/application/Context/State/Selection/SelectedScript';
+import { IReadOnlyApplicationContext } from '@/application/Context/IApplicationContext';
 import { IUserScript } from './IUserScript';
-import { IScriptingDefinition } from '@/domain/IScriptingDefinition';
 
 export interface IUserScriptGenerator {
-    buildCode(
-        selectedScripts: ReadonlyArray<SelectedScript>,
-        scriptingDefinition: IScriptingDefinition): IUserScript;
+    buildCode(context: IReadOnlyApplicationContext): IUserScript;
 }

@@ -25,11 +25,7 @@ export default class MenuOptionListItem extends Vue {
 @use "@/presentation/assets/styles/main" as *;
 
 .enabled {
-    cursor: pointer;
-    &:hover {
-        font-weight:bold;
-        text-decoration:underline;
-    }
+    @include clickable;
 }
 .disabled {
     color: $color-primary-light;

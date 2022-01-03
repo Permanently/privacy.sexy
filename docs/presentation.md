@@ -41,7 +41,7 @@
 - `StatefulVue` includes abstract `handleCollectionState` that is fired once the component is loaded and also each time [collection](./collection-files.md) is changed.
 - Do not forget to subscribe from events when component is destroyed or if needed [collection](./collection-files.md) is changed.
   - 💡 `events` in base class [`StatefulVue`](./../src/presentation/components/Shared/StatefulVue.ts) makes lifecycling easier
-- 📖 See [Application state | Application layer](./presentation.md#application-state) where the state is implemented using using state pattern.
+- 📖 See [Application state | Application layer](./presentation.md#application-state) where the state is implemented using using [state pattern](https://en.wikipedia.org/wiki/State_pattern).
 
 ## Modals
 

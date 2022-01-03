@@ -3,16 +3,26 @@ import { SelectedScript } from '@/application/Context/State/Selection/SelectedSc
 import { IScript } from '@/domain/IScript';
 import { IEventSource } from '@/infrastructure/Events/IEventSource';
 import { EventSource } from '@/infrastructure/Events/EventSource';
+import { OperatingSystem } from '@/domain/OperatingSystem';
+import { ScriptStub } from './ScriptStub';
 
 export class UserSelectionStub implements IUserSelection {
+    public selectedOs: OperatingSystem = OperatingSystem.Windows;
     public readonly changed: IEventSource<readonly SelectedScript[]> = new EventSource<readonly SelectedScript[]>();
     public selectedScripts: readonly SelectedScript[] = [];
-    constructor(private readonly allScripts: readonly IScript[]) {
 
-    }
-    public withSelectedScripts(selectedScripts: readonly SelectedScript[]) {
+    private allSelectableScripts: readonly IScript[] = [ new ScriptStub('1') ];
+    
+    public withSelectedScripts(selectedScripts: readonly SelectedScript[]): UserSelectionStub {
         this.selectedScripts = selectedScripts;
+        return this;
     }
+    public withAllSelectableScripts(allSelectableScripts: readonly IScript[]) {
+        this.allSelectableScripts = allSelectableScripts;
+        return this;
+    }
+
+
     public areAllSelected(): boolean {
         throw new Error('Method not implemented.');
     }
@@ -34,14 +44,14 @@ export class UserSelectionStub implements IUserSelection {
     public removeSelectedScript(): void {
         throw new Error('Method not implemented.');
     }
-    public selectOnly(scripts: ReadonlyArray<IScript>): void {
-        this.selectedScripts = scripts.map((s) => new SelectedScript(s, false));
+    public selectOnly(scripts: readonly SelectedScript[]): void {
+        this.selectedScripts = scripts;
     }
     public isSelected(): boolean {
         throw new Error('Method not implemented.');
     }
     public selectAll(): void {
-        this.selectOnly(this.allScripts);
+        this.selectOnly(this.allSelectableScripts.map((s) => new SelectedScript(s, false)));
     }
     public deselectAll(): void {
         this.selectedScripts = [];

@@ -6,26 +6,30 @@ import { OperatingSystem } from '@/domain/OperatingSystem';
 import { ICategoryCollection } from '@/domain/ICategoryCollection';
 import { EventSource } from '@/infrastructure/Events/EventSource';
 import { assertInRange } from '@/application/Common/Enum';
+import { IObservableImporter } from './ObservableImporter/IObservableImporter';
+import { ObservableContextImporter } from './ObservableImporter/ObservableContextImporter';
 
 type StateMachine = Map<OperatingSystem, ICategoryCollectionState>;
 
 export class ApplicationContext implements IApplicationContext {
     public readonly contextChanged = new EventSource<IApplicationContextChangedEvent>();
+    public readonly importer: IObservableImporter;
     public collection: ICategoryCollection;
     public currentOs: OperatingSystem;
 
     public get state(): ICategoryCollectionState {
         return this.states[this.collection.os];
     }
-
     private readonly states: StateMachine;
+
     public constructor(
         public readonly app: IApplication,
         initialContext: OperatingSystem) {
         validateApp(app);
         assertInRange(initialContext, OperatingSystem);
-        this.states = initializeStates(app);
+        this.states = initializeStates(app, this);
         this.changeContext(initialContext);
+        this.importer = new ObservableContextImporter(this);
     }
 
     public changeContext(os: OperatingSystem): void {
@@ -51,10 +55,10 @@ function validateApp(app: IApplication) {
     }
 }
 
-function initializeStates(app: IApplication): StateMachine {
+function initializeStates(app: IApplication, context: IApplicationContext): StateMachine {
     const machine = new Map<OperatingSystem, ICategoryCollectionState>();
     for (const collection of app.collections) {
-        machine[collection.os] = new CategoryCollectionState(collection);
+        machine[collection.os] = new CategoryCollectionState(collection, context);
     }
     return machine;
 }

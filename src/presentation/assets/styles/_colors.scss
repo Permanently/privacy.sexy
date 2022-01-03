@@ -15,6 +15,7 @@ $color-on-primary           : #e4f1fe;
 
 // --- Secondary | Accent color, should be applied sparingly to accent select parts of UI
 $color-secondary            : #00D1AD;
+$color-secondary-dark       : darken($color-secondary, 8%);
 $color-secondary-light      : lighten($color-secondary, 48%);
 // Text/iconography color that is usable on top of secondary color
 $color-on-secondary         : #005051;
@@ -26,3 +27,5 @@ $color-on-surface           : #4d5156;
 
 // Background | Appears behind scrollable content.
 $color-background           : #e6ecf4;
+
+$color-error                : #cc0000;

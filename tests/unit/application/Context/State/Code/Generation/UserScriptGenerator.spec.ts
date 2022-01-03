@@ -6,13 +6,22 @@ import { ICodeBuilderFactory } from '@/application/Context/State/Code/Generation
 import { ICodeBuilder } from '@/application/Context/State/Code/Generation/ICodeBuilder';
 import { ScriptStub } from '@tests/unit/stubs/ScriptStub';
 import { ScriptingDefinitionStub } from '@tests/unit/stubs/ScriptingDefinitionStub';
+import { UserSelectionStub } from '@tests/unit/stubs/UserSelectionStub';
+import { IScriptingDefinition } from '@/domain/IScriptingDefinition';
+import { IUserScript } from '@/application/Context/State/Code/Generation/IUserScript';
+import { CodeBuilderStub } from '@tests/unit/stubs/CodeBuilderStub';
+import { ApplicationContextStub } from '@tests/unit/stubs/ApplicationContextStub';
+import { ApplicationStub } from '@tests/unit/stubs/ApplicationStub';
+import { CategoryCollectionStub } from '@tests/unit/stubs/CategoryCollectionStub';
+import { OperatingSystem } from '@/domain/OperatingSystem';
+import { IApplicationContext } from '@/application/Context/IApplicationContext';
+import { CategoryCollectionStateStub } from '@tests/unit/stubs/CategoryCollectionStateStub';
 
 describe('UserScriptGenerator', () => {
-    describe('scriptingDefinition', () => {
+    describe('appends end/start from scriptingDefinition', () => {
         describe('startCode', () => {
             it('is prepended if not empty', () => {
                 // arrange
-                const sut = new UserScriptGenerator();
                 const startCode = 'Start\nCode';
                 const script = new ScriptStub('id')
                     .withCode('code\nmulti-lined')
@@ -22,7 +31,10 @@ describe('UserScriptGenerator', () => {
                     .withEndCode(undefined);
                 const expectedStart = `${startCode}\n`;
                 // act
-                const code = sut.buildCode([script], definition);
+                const code = new UserScriptGeneratorTestRunner()
+                    .withDefinition(definition)
+                    .withSelectedScripts(script)
+                    .buildCode();
                 // assert
                 const actual = code.code;
                 expect(actual.startsWith(expectedStart));
@@ -30,7 +42,6 @@ describe('UserScriptGenerator', () => {
             it('is not prepended if empty', () => {
                 // arrange
                 const codeBuilderStub = new CodeBuilderStub();
-                const sut = new UserScriptGenerator(mockCodeBuilderFactory(codeBuilderStub));
                 const script = new ScriptStub('id')
                     .withCode('code\nmulti-lined')
                     .toSelectedScript();
@@ -41,7 +52,11 @@ describe('UserScriptGenerator', () => {
                     .appendFunction(script.script.name, script.script.code.execute)
                     .toString();
                 // act
-                const code = sut.buildCode([script], definition);
+                const code = new UserScriptGeneratorTestRunner()
+                    .withCodeBuilder(codeBuilderStub)
+                    .withDefinition(definition)
+                    .withSelectedScripts(script)
+                    .buildCode();
                 // assert
                 const actual = code.code;
                 expect(actual.startsWith(expectedStart));
@@ -50,7 +65,6 @@ describe('UserScriptGenerator', () => {
         describe('endCode', () => {
             it('is appended if not empty', () => {
                 // arrange
-                const sut = new UserScriptGenerator();
                 const endCode = 'End\nCode';
                 const script = new ScriptStub('id')
                     .withCode('code\nmulti-lined')
@@ -59,7 +73,10 @@ describe('UserScriptGenerator', () => {
                     .withEndCode(endCode);
                 const expectedEnd = `${endCode}\n`;
                 // act
-                const code = sut.buildCode([script], definition);
+                const code = new UserScriptGeneratorTestRunner()
+                    .withDefinition(definition)
+                    .withSelectedScripts(script)
+                    .buildCode();
                 // assert
                 const actual = code.code;
                 expect(actual.endsWith(expectedEnd));
@@ -67,7 +84,6 @@ describe('UserScriptGenerator', () => {
             it('is not appended if empty', () => {
                 // arrange
                 const codeBuilderStub = new CodeBuilderStub();
-                const sut = new UserScriptGenerator(mockCodeBuilderFactory(codeBuilderStub));
                 const script = new ScriptStub('id')
                     .withCode('code\nmulti-lined')
                     .toSelectedScript();
@@ -77,131 +93,201 @@ describe('UserScriptGenerator', () => {
                 const definition = new ScriptingDefinitionStub()
                     .withEndCode(undefined);
                 // act
-                const code = sut.buildCode([script], definition);
+                const code = new UserScriptGeneratorTestRunner()
+                    .withCodeBuilder(codeBuilderStub)
+                    .withDefinition(definition)
+                    .withSelectedScripts(script)
+                    .buildCode();
                 // assert
                 const actual = code.code;
                 expect(actual.endsWith(expectedEnd));
             });
         });
     });
-    it('appends revert script', () => {
-        // arrange
-        const sut = new UserScriptGenerator();
-        const scriptName = 'test non-revert script';
-        const scriptCode = 'REM nop';
-        const script = new ScriptStub('id')
-            .withName(scriptName)
-            .withRevertCode(scriptCode)
-            .toSelectedScript(true);
-        const definition = new ScriptingDefinitionStub();
-        // act
-        const actual = sut.buildCode([ script ], definition);
-        // assert
-        expect(actual.code).to.include(`${scriptName} (revert)`);
-        expect(actual.code).to.include(scriptCode);
+    describe('appends scripts', () => {
+        it('appends revert script', () => {
+            // arrange
+            const scriptName = 'test non-revert script';
+            const scriptCode = 'REM nop';
+            const script = new ScriptStub('id')
+                .withName(scriptName)
+                .withRevertCode(scriptCode)
+                .toSelectedScript(true);
+            // act
+            const actual = new UserScriptGeneratorTestRunner()
+                .withSelectedScripts(script)
+                .buildCode();
+            // assert
+            expect(actual.code).to.include(`${scriptName} (revert)`);
+            expect(actual.code).to.include(scriptCode);
+        });
+        it('appends non-revert script', () => {
+            // arrange
+            const scriptName = 'test non-revert script';
+            const scriptCode = 'REM nop';
+            const script = new ScriptStub('id').withName(scriptName).withCode(scriptCode);
+            const selectedScripts = [ new SelectedScript(script, false)];
+            // act
+            const actual = new UserScriptGeneratorTestRunner()
+                .withSelectedScripts(...selectedScripts)
+                .buildCode();
+            // assert
+            expect(actual.code).to.include(scriptName);
+            expect(actual.code).to.not.include(`${scriptName} (revert)`);
+            expect(actual.code).to.include(scriptCode);
+        });
     });
-    it('appends non-revert script', () => {
-        const sut = new UserScriptGenerator();
-        // arrange
-        const scriptName = 'test non-revert script';
-        const scriptCode = 'REM nop';
-        const script = new ScriptStub('id').withName(scriptName).withCode(scriptCode);
-        const selectedScripts = [ new SelectedScript(script, false)];
-        const definition = new ScriptingDefinitionStub();
-        // act
-        const actual = sut.buildCode(selectedScripts, definition);
-        // assert
-        expect(actual.code).to.include(scriptName);
-        expect(actual.code).to.not.include(`${scriptName} (revert)`);
-        expect(actual.code).to.include(scriptCode);
+    describe('appends export data', () => {
+        // TODO: Test this
     });
     describe('scriptPositions', () => {
         it('without script; returns empty', () => {
             // arrange
-            const sut = new UserScriptGenerator();
             const selectedScripts = [ ];
-            const definition = new ScriptingDefinitionStub();
             // act
-            const actual = sut.buildCode(selectedScripts, definition);
+            const actual = new UserScriptGeneratorTestRunner()
+                .withSelectedScripts(...selectedScripts)
+                .buildCode();
             // assert
             expect(actual.scriptPositions.size).to.equal(0);
         });
         describe('with scripts', () => {
             // arrange
-            const totalStartCodeLines = 2;
-            const totalFunctionNameLines = 4;
             const definition = new ScriptingDefinitionStub()
-                .withStartCode('First line\nSecond line');
+                .withStartCode('startCode: First line\nstartCode: Second line');
             describe('single script', () => {
                 const testCases = [
                     {
-                        name: 'single-lined',
+                        testName: 'single-lined',
                         scriptCode: 'only line',
-                        codeLines: 1,
                     },
                     {
-                        name: 'multi-lined',
+                        testName: 'multi-lined',
                         scriptCode: 'first line\nsecond line',
-                        codeLines: 2,
                     },
                 ];
-                const sut = new UserScriptGenerator();
                 for (const testCase of testCases) {
-                    it(testCase.name, () => {
-                        const expectedStartLine = totalStartCodeLines
-                            + 1     // empty line code begin
-                            + 1;    // code begin
-                        const expectedEndLine = expectedStartLine
-                            + totalFunctionNameLines
-                            + testCase.codeLines;
+                    it(testCase.testName, () => {
+                        const builder = new CodeBuilderStub();
+                        const expectedLines = {
+                            start: builder
+                                .appendLine(definition.startCode)
+                                .appendLine() // empty line after start code
+                                .currentLine + 1 // add one additional line to ignore next empty line
+                            ,
+                            end: builder
+                                .appendLine()
+                                .appendFunction('testScript', testCase.scriptCode)
+                                .currentLine - 1 /* remove one to ignore last line from appendFunction */
+                            ,
+                        };
                         const selectedScript = new ScriptStub(`script-id`)
                                 .withName(`script`)
                                 .withCode(testCase.scriptCode)
                                 .toSelectedScript(false);
+                        builder.reset();
                         // act
-                        const actual = sut.buildCode([ selectedScript ], definition);
-                        // expect
+                        const actual = new UserScriptGeneratorTestRunner()
+                            .withDefinition(definition)
+                            .withSelectedScripts(selectedScript)
+                            .withCodeBuilder(builder)
+                            .buildCode();
+                        // assert
                         expect(1).to.equal(actual.scriptPositions.size);
                         const position = actual.scriptPositions.get(selectedScript);
-                        expect(expectedStartLine).to.equal(position.startLine, 'Unexpected start line position');
-                        expect(expectedEndLine).to.equal(position.endLine, 'Unexpected end line position');
+                        expect(expectedLines.start).to.equal(position.startLine,
+                            `Unexpected start line position. Expected ${expectedLines.start}, got ${position.startLine}.\n${showLineNumbers(actual.code)}\n`);
+                        expect(expectedLines.end).to.equal(position.endLine,
+                            `Unexpected end line position. Expected ${expectedLines.end}, got ${position.endLine}.\n${showLineNumbers(actual.code)}\n`);
                     });
                 }
             });
             it('multiple scripts', () => {
-                const sut = new UserScriptGenerator();
                 const selectedScripts = [
-                    new ScriptStub('1').withCode('only line'),
-                    new ScriptStub('2').withCode('first line\nsecond line'),
+                    new ScriptStub('firstScript').withCode('only line'),
+                    new ScriptStub('secondScript').withCode('first line\nsecond line'),
                 ].map((s) => s.toSelectedScript());
-                const expectedFirstScriptStart = totalStartCodeLines
-                    + 1     // empty line code begin
-                    + 1;    // code begin
-                const expectedFirstScriptEnd = expectedFirstScriptStart
-                    + totalFunctionNameLines
-                    + 1;    // total code lines
-                const expectedSecondScriptStart = expectedFirstScriptEnd
-                    + 1     // code end hyphens
-                    + 1     // new line
-                    + 1;    // code begin
-                const expectedSecondScriptEnd =
-                    expectedSecondScriptStart
-                    + totalFunctionNameLines
-                    + 2;    // total lines of second script
+                const builder = new CodeBuilderStub();
+                const expectedLines = {
+                    first: {
+                        start: builder
+                            .appendLine(definition.startCode)
+                            .appendLine() // empty line after start code
+                            .currentLine + 1 // add one additional line to ignore ignore next empty line
+                        ,
+                        end: builder
+                            .appendLine()
+                            .appendFunction(selectedScripts[0].script.name, selectedScripts[0].script.code.execute)
+                            .currentLine - 1 /* remove one to ignore last line from appendFunction */
+                        ,
+                    },
+                    second: {
+                        start: builder
+                            .appendLine()
+                            .currentLine + 1 // add one additional line to ignore next empty line
+                        ,
+                        end: builder
+                            .appendLine()
+                            .appendFunction(selectedScripts[1].script.name, selectedScripts[1].script.code.execute)
+                            .currentLine - 1 /* remove one to ignore last line from appendFunction */
+                        ,
+                    },
+                };
+                builder.reset();
                 // act
-                const actual = sut.buildCode(selectedScripts, definition);
+                const actual = new UserScriptGeneratorTestRunner()
+                    .withDefinition(definition)
+                    .withSelectedScripts(...selectedScripts)
+                    .withCodeBuilder(builder)
+                    .buildCode();
                 // assert
                 const firstPosition = actual.scriptPositions.get(selectedScripts[0]);
                 const secondPosition = actual.scriptPositions.get(selectedScripts[1]);
                 expect(actual.scriptPositions.size).to.equal(2);
-                expect(expectedFirstScriptStart).to.equal(firstPosition.startLine, 'Unexpected start line position (first script)');
-                expect(expectedFirstScriptEnd).to.equal(firstPosition.endLine, 'Unexpected end line position (first script)');
-                expect(expectedSecondScriptStart).to.equal(secondPosition.startLine, 'Unexpected start line position (second script)');
-                expect(expectedSecondScriptEnd).to.equal(secondPosition.endLine, 'Unexpected end line position (second script)');
+                expect(expectedLines.first.start).to.equal(firstPosition.startLine,
+                    `Unexpected start line position (first script). Expected ${expectedLines.first.start}, got ${firstPosition.startLine}.\n${showLineNumbers(actual.code)}\n`);
+                expect(expectedLines.first.end).to.equal(firstPosition.endLine,
+                    `Unexpected end line position (first script). Expected ${expectedLines.first.end}, got ${firstPosition.endLine}.\n${showLineNumbers(actual.code)}\n`);
+                expect(expectedLines.second.start).to.equal(secondPosition.startLine,
+                    `Unexpected start line position (second script). Expected ${expectedLines.second.start}, got ${secondPosition.startLine}.\n${showLineNumbers(actual.code)}\n`);
+                expect(expectedLines.second.end).to.equal(secondPosition.endLine,
+                    `Unexpected end line position (second script). Expected ${expectedLines.second.end}, got ${secondPosition.endLine}.\n${showLineNumbers(actual.code)}\n`);
             });
         });
     });
 });
+
+function showLineNumbers(text: string): string {
+    return text
+        .split(/\r\n|\r|\n/)
+        .map((line, index) => `(${index}): ${line}`)
+        .join('\n');
+}
+
+class UserScriptGeneratorTestRunner {
+    private definition: IScriptingDefinition = new ScriptingDefinitionStub();
+    private selectedScripts: readonly SelectedScript[];
+    private codeBuilderFactory: ICodeBuilderFactory = mockCodeBuilderFactory(new CodeBuilderStub());
+
+    public withDefinition(definition: IScriptingDefinition): UserScriptGeneratorTestRunner {
+        this.definition = definition;
+        return this;
+    }
+    public withCodeBuilder(codeBuilder: ICodeBuilder): UserScriptGeneratorTestRunner {
+        this.codeBuilderFactory = mockCodeBuilderFactory(codeBuilder);
+        return this;
+    }
+    public withSelectedScripts(...scripts: readonly SelectedScript[]): UserScriptGeneratorTestRunner {
+        this.selectedScripts = scripts;
+        return this;
+    }
+
+    public buildCode(): IUserScript {
+        const context = createContext(this.definition, this.selectedScripts);
+        const sut = new UserScriptGenerator(this.codeBuilderFactory);
+        return sut.buildCode(context);
+    }
+}
 
 function mockCodeBuilderFactory(mock: ICodeBuilder): ICodeBuilderFactory {
     return {
@@ -209,29 +295,18 @@ function mockCodeBuilderFactory(mock: ICodeBuilder): ICodeBuilderFactory {
     };
 }
 
-class CodeBuilderStub implements ICodeBuilder {
-    public currentLine = 0;
-    private text = '';
-    public appendLine(code?: string): ICodeBuilder {
-        this.text += this.text ? `${code}\n` : code;
-        this.currentLine++;
-        return this;
-    }
-    public appendTrailingHyphensCommentLine(totalRepeatHyphens: number): ICodeBuilder {
-        return this.appendLine(`trailing-hyphens-${totalRepeatHyphens}`);
-    }
-    public appendCommentLine(commentLine?: string): ICodeBuilder {
-        return this.appendLine(`Comment | ${commentLine}`);
-    }
-    public appendCommentLineWithHyphensAround(sectionName: string, totalRepeatHyphens: number): ICodeBuilder {
-        return this.appendLine(`hyphens-around-${totalRepeatHyphens} | Section name: ${sectionName} | hyphens-around-${totalRepeatHyphens}`);
-    }
-    public appendFunction(name: string, code: string): ICodeBuilder {
-        return this
-            .appendLine(`Function | Name: ${name}`)
-            .appendLine(`Function | Code: ${code}`);
-    }
-    public toString(): string {
-        return this.text;
-    }
+function createContext(
+    scripting: IScriptingDefinition,
+    selectedScripts: readonly SelectedScript[]): IApplicationContext {
+    const os = OperatingSystem.Windows;
+    const collection = new CategoryCollectionStub().withScripting(scripting).withOs(os);
+    const app = new ApplicationStub().withCollection(collection);
+    const selection = new UserSelectionStub().withSelectedScripts(selectedScripts);
+    const state = new CategoryCollectionStateStub()
+        .withCollection(collection)
+        .withSelection(selection);
+    const context = new ApplicationContextStub()
+        .withApplication(app)
+        .withState(state);
+    return context;
 }

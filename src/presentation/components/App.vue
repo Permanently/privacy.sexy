@@ -1,22 +1,27 @@
 <template>
-  <div id="app">
+  <ScriptFileDroppable>
+    <div id="app">
       <div class="app__wrapper">
-        <TheHeader class="app__row" />
-        <TheSearchBar class="app__row" />
-        <TheScriptArea class="app__row" />
-        <TheCodeButtons class="app__row app__code-buttons" />
-        <TheFooter />
+          <TheHeader class="app__row" />
+          <TheSearchBar class="app__row" />
+          <TheScriptArea class="app__row" />
+          <TheCodeButtons class="app__row app__code-buttons" />
+          <TheFooter />
+        <TheImportDialog />
       </div>
-   </div>
+    </div>
+  </ScriptFileDroppable>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import TheHeader from '@/presentation/components/TheHeader.vue';
+import ScriptFileDroppable from '@/presentation/components/ScriptFileDroppable/ScriptFileDroppable.vue';
 import TheFooter from '@/presentation/components/TheFooter/TheFooter.vue';
 import TheCodeButtons from '@/presentation/components/Code/CodeButtons/TheCodeButtons.vue';
 import TheScriptArea from '@/presentation/components/Scripts/TheScriptArea.vue';
 import TheSearchBar from '@/presentation/components/TheSearchBar.vue';
+import TheImportDialog from '@/presentation/components/Import/TheImportDialog.vue';
 
 @Component({
   components: {
@@ -25,6 +30,8 @@ import TheSearchBar from '@/presentation/components/TheSearchBar.vue';
     TheScriptArea,
     TheSearchBar,
     TheFooter,
+    ScriptFileDroppable,
+    TheImportDialog,
   },
 })
 export default class App extends Vue {

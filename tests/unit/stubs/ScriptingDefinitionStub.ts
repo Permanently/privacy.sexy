@@ -4,8 +4,8 @@ import { ScriptingLanguage } from '@/domain/ScriptingLanguage';
 export class ScriptingDefinitionStub implements IScriptingDefinition {
     public fileExtension: string = '.bat';
     public language = ScriptingLanguage.batchfile;
-    public startCode = 'REM start code';
-    public endCode = 'REM end code';
+    public startCode = '[ScriptingDefinitionStub]startCode';
+    public endCode = '[ScriptingDefinitionStub]endCode';
 
     public withStartCode(startCode: string): ScriptingDefinitionStub {
         this.startCode = startCode;

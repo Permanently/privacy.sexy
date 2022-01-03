@@ -28,7 +28,7 @@
 - Free (both free as in beer and free as in speech)
 - No need to run any compiled software that has access to your system, just run the generated scripts
 - Have full visibility into what the tweaks do as you enable them
-- Ability to revert (undo) applied scripts
+- Ability to revert (undo) and import applied scripts
 - Everything is transparent: both application and its infrastructure are open-source and automated
 - Easily extendable with [own powerful templating language](./docs/templating.md)
 - Each script is independently executable without cross-dependencies

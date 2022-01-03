@@ -1,11 +1,11 @@
 import { SelectedScript } from './SelectedScript';
 import { IUserSelection } from './IUserSelection';
 import { InMemoryRepository } from '@/infrastructure/Repository/InMemoryRepository';
-import { IScript } from '@/domain/IScript';
 import { EventSource } from '@/infrastructure/Events/EventSource';
 import { IRepository } from '@/infrastructure/Repository/IRepository';
 import { ICategory } from '@/domain/ICategory';
 import { ICategoryCollection } from '@/domain/ICategoryCollection';
+import { OperatingSystem } from '@/domain/OperatingSystem';
 
 export class UserSelection implements IUserSelection {
     public readonly changed = new EventSource<ReadonlyArray<SelectedScript>>();
@@ -119,10 +119,14 @@ export class UserSelection implements IUserSelection {
         this.changed.notify([]);
     }
 
-    public selectOnly(scripts: readonly IScript[]): void {
+    public selectOnly(scripts: readonly SelectedScript[]): void {
         if (!scripts || scripts.length === 0) {
             throw new Error('Scripts are empty. Use deselectAll() if you want to deselect everything');
         }
+        this.setState(scripts);
+    }
+
+    private setState(scripts: readonly SelectedScript[]): void {
         // Unselect from selected scripts
         if (this.scripts.length !== 0) {
             this.scripts.getItems()
@@ -130,11 +134,15 @@ export class UserSelection implements IUserSelection {
                 .map((script) => script.id)
                 .forEach((scriptId) => this.scripts.removeItem(scriptId));
         }
-        // Select from unselected scripts
-        const unselectedScripts = scripts.filter((script) => !this.scripts.exists(script.id));
-        for (const toSelect of unselectedScripts) {
-            const selection = new SelectedScript(toSelect, false);
-            this.scripts.addItem(selection);
+        // Add new or update existing
+        for (const script of scripts) {
+            if (!this.scripts.exists(script.id)) {
+                this.scripts.addItem(script);
+            } else {
+                if (script.revert !== this.scripts.getById(script.id).revert) {
+                    this.scripts.addOrUpdateItem(script);
+                }
+            }
         }
         this.changed.notify(this.scripts.getItems());
     }

@@ -9,7 +9,7 @@ import { RecommendationLevel } from '@/domain/RecommendationLevel';
 
 export class CategoryCollectionStub implements ICategoryCollection {
     public scripting: IScriptingDefinition = new ScriptingDefinitionStub();
-    public os = OperatingSystem.Linux;
+    public os = OperatingSystem.Windows;
     public initialScript: IScript = new ScriptStub('55');
     public totalScripts = 0;
     public totalCategories = 0;

@@ -26,7 +26,7 @@
 <script lang="ts">
 import { Component } from 'vue-property-decorator';
 import { StatefulVue } from '@/presentation/components/Shared/StatefulVue';
-import { SaveFileDialog, FileType } from '@/infrastructure/SaveFileDialog';
+import { SaveFileDialog, FileType } from '@/presentation/dialogs/SaveFileDialog';
 import { Clipboard } from '@/infrastructure/Clipboard';
 import Dialog from '@/presentation/components/Shared/Dialog.vue';
 import IconButton from './IconButton.vue';

@@ -1,12 +1,18 @@
 <template>
-  <Responsive
-    v-on:sizeChanged="sizeChanged()"
-    v-non-collapsing>
-    <div
-      :id="editorId"
-      class="code-area"
-    ></div>
-  </Responsive>
+  <div class="area">
+    <Responsive
+      class="area__code"
+      v-on:sizeChanged="sizeChanged()"
+      v-non-collapsing>
+      <div
+        :id="editorId"
+        class="code-area"
+      ></div>
+    </Responsive>
+    <div class="area__buttons">
+      <ImportButton />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -21,10 +27,12 @@ import { IReadOnlyCategoryCollectionState } from '@/application/Context/State/IC
 import { CodeBuilderFactory } from '@/application/Context/State/Code/Generation/CodeBuilderFactory';
 import Responsive from '@/presentation/components/Shared/Responsive.vue';
 import { NonCollapsing } from '@/presentation/components/Scripts/View/Cards/NonCollapsingDirective';
+import ImportButton from './ImportButton.vue';
 
 @Component({
   components: {
     Responsive,
+    ImportButton,
   },
   directives: { NonCollapsing },
 })
@@ -142,6 +150,8 @@ function getDefaultCode(language: ScriptingLanguage): string {
     .appendCommentLine('-- 🧐 Why privacy.sexy')
     .appendCommentLine(' ✔️ Rich tweak pool to harden security & privacy of the OS and other software on it.')
     .appendCommentLine(' ✔️ No need to run any compiled software on your system, just run the generated scripts.')
+    .appendCommentLine(' ✔️ Ability to revert (undo) applied scripts.')
+    .appendCommentLine(' ✔️ Export your selection for your future use or share with others.')
     .appendCommentLine(' ✔️ Have full visibility into what the tweaks do as you enable them.')
     .appendCommentLine(' ✔️ Open-source and free (both free as in beer and free as in speech).')
     .toString();
@@ -151,6 +161,21 @@ function getDefaultCode(language: ScriptingLanguage): string {
 
 <style scoped lang="scss">
 @use "@/presentation/assets/styles/main" as *;
+
+.area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  &__code {
+    flex: 1;
+  }
+  &__buttons {
+    align-self: flex-end;
+  }
+  > *:not(:last-child) {
+    margin-bottom: 0.5em;
+  }
+}
 
 ::v-deep .code-area {
   min-height: 200px;

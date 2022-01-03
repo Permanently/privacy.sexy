@@ -70,7 +70,7 @@ function hasAllSelectedLevelOf(level: RecommendationLevel, state: IReadOnlyCateg
 
 function selectOnly(level: RecommendationLevel, state: ICategoryCollectionState) {
     const scripts = state.collection.getScriptsByLevel(level);
-    state.selection.selectOnly(scripts);
+    state.selection.selectOnly(scripts.map(((script) => new SelectedScript(script, false))));
 }
 
 function areAllSelected(

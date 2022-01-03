@@ -37,10 +37,10 @@ describe('SelectionTypeHandler', () => {
                 initialScripts: [],
             }, {
                 name: 'when some scripts are selected',
-                initialScripts: [...scenario.allStandard, ...scenario.someStrict],
+                initialScripts: [...scenario.data.allStandard, ...scenario.data.someStrict],
             }, {
                 name: 'when all scripts are selected',
-                initialScripts: scenario.all,
+                initialScripts: scenario.data.all,
             } ];
             for (const initialScriptsCase of initialScriptsCases) {
                 describe(initialScriptsCase.name, () => {
@@ -51,13 +51,13 @@ describe('SelectionTypeHandler', () => {
                         output: [],
                     }, {
                         input: SelectionType.Standard,
-                        output: scenario.allStandard,
+                        output: scenario.data.allStandard,
                     }, {
                         input: SelectionType.Strict,
-                        output: [...scenario.allStandard, ...scenario.allStrict],
+                        output: [...scenario.data.allStandard, ...scenario.data.allStrict],
                     }, {
                         input: SelectionType.All,
-                        output: scenario.all,
+                        output: scenario.data.all,
                     }];
                     for (const expectation of typeExpectations) {
                         // act
@@ -82,31 +82,31 @@ describe('SelectionTypeHandler', () => {
             expected: SelectionType.None,
         }, {
             name: 'when some standard scripts are selected',
-            selection: scenario.someStandard,
+            selection: scenario.data.someStandard,
             expected: SelectionType.Custom,
         }, {
             name: 'when all standard scripts are selected',
-            selection: scenario.allStandard,
+            selection: scenario.data.allStandard,
             expected: SelectionType.Standard,
         }, {
             name: 'when all standard and some strict scripts are selected',
-            selection: [...scenario.allStandard, ...scenario.someStrict],
+            selection: [...scenario.data.allStandard, ...scenario.data.someStrict],
             expected: SelectionType.Custom,
         }, {
             name: 'when all standard and strict scripts are selected',
-            selection: [...scenario.allStandard, ...scenario.allStrict],
+            selection: [...scenario.data.allStandard, ...scenario.data.allStrict],
             expected: SelectionType.Strict,
         }, {
             name: 'when strict scripts are selected but not standard',
-            selection: scenario.allStrict,
+            selection: scenario.data.allStrict,
             expected: SelectionType.Custom,
         }, {
             name: 'when all standard and strict, and some unrecommended are selected',
-            selection: [...scenario.allStandard, ...scenario.allStrict, ...scenario.someUnrecommended],
+            selection: [...scenario.data.allStandard, ...scenario.data.allStrict, ...scenario.data.someUnrecommended],
             expected: SelectionType.Custom,
         }, {
             name: 'when all scripts are selected',
-            selection: scenario.all,
+            selection: scenario.data.all,
             expected: SelectionType.All,
         } ];
         for (const testCase of testCases) {

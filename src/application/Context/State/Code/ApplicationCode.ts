@@ -2,12 +2,12 @@ import { CodeChangedEvent } from './Event/CodeChangedEvent';
 import { CodePosition } from './Position/CodePosition';
 import { ICodeChangedEvent } from './Event/ICodeChangedEvent';
 import { SelectedScript } from '@/application/Context/State/Selection/SelectedScript';
-import { IReadOnlyUserSelection } from '@/application/Context/State/Selection/IUserSelection';
 import { UserScriptGenerator } from './Generation/UserScriptGenerator';
 import { EventSource } from '@/infrastructure/Events/EventSource';
 import { IApplicationCode } from './IApplicationCode';
 import { IUserScriptGenerator } from './Generation/IUserScriptGenerator';
-import { IScriptingDefinition } from '@/domain/IScriptingDefinition';
+import { IUserScript } from './Generation/IUserScript';
+import { IReadOnlyApplicationContext } from '@/application/Context/IApplicationContext';
 
 export class ApplicationCode implements IApplicationCode {
     public readonly changed = new EventSource<ICodeChangedEvent>();
@@ -16,24 +16,23 @@ export class ApplicationCode implements IApplicationCode {
     private scriptPositions = new Map<SelectedScript, CodePosition>();
 
     constructor(
-        userSelection: IReadOnlyUserSelection,
-        private readonly scriptingDefinition: IScriptingDefinition,
+        private readonly context: IReadOnlyApplicationContext,
         private readonly generator: IUserScriptGenerator = new UserScriptGenerator()) {
-        if (!userSelection) { throw new Error('userSelection is null or undefined'); }
-        if (!scriptingDefinition) { throw new Error('scriptingDefinition is null or undefined'); }
-        if (!generator) { throw new Error('generator is null or undefined'); }
-        this.setCode(userSelection.selectedScripts);
-        userSelection.changed.on((scripts) => {
-            this.setCode(scripts);
-        });
+        if (!context) { throw new Error('undefined context'); }
+        if (!generator) { throw new Error('undefined generator'); }
+        context.contextChanged.on(() => this.updateCode());
     }
 
-    private setCode(scripts: ReadonlyArray<SelectedScript>): void {
+    private updateCode(): void {
         const oldScripts = Array.from(this.scriptPositions.keys());
-        const code = this.generator.buildCode(scripts, this.scriptingDefinition);
-        this.current = code.code;
-        this.scriptPositions = code.scriptPositions;
-        const event = new CodeChangedEvent(code.code, oldScripts, code.scriptPositions);
+        const script = this.generator.buildCode(this.context);
+        this.current = script.code;
+        this.scriptPositions = script.scriptPositions;
+        this.notifyCodeChange(script, oldScripts);
+    }
+
+    private notifyCodeChange(newScript: IUserScript, oldScripts: SelectedScript[]) {
+        const event = new CodeChangedEvent(newScript.code, oldScripts, newScript.scriptPositions);
         this.changed.notify(event);
     }
 }

@@ -1,5 +1,4 @@
 import { SelectedScript } from './SelectedScript';
-import { IScript } from '@/domain/IScript';
 import { ICategory } from '@/domain/ICategory';
 import { IEventSource } from '@/infrastructure/Events/IEventSource';
 
@@ -17,7 +16,7 @@ export interface IUserSelection extends IReadOnlyUserSelection {
     addSelectedScript(scriptId: string, revert: boolean): void;
     addOrUpdateSelectedScript(scriptId: string, revert: boolean): void;
     removeSelectedScript(scriptId: string): void;
-    selectOnly(scripts: ReadonlyArray<IScript>): void;
+    selectOnly(scripts: readonly SelectedScript[]): void;
     selectAll(): void;
     deselectAll(): void;
 }

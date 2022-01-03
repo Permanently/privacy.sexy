@@ -8,6 +8,7 @@ import { IApplication } from '@/domain/IApplication';
 import { ApplicationStub } from '@tests/unit/stubs/ApplicationStub';
 import { CategoryCollectionStub } from '@tests/unit/stubs/CategoryCollectionStub';
 import { EnumRangeTestRunner } from '@tests/unit/application/Common/EnumRangeTestRunner';
+import { ObservableContextImporter } from '@/application/Context/ObservableImporter/ObservableContextImporter';
 
 describe('ApplicationContext', () => {
     describe('changeContext', () => {
@@ -206,6 +207,17 @@ describe('ApplicationContext', () => {
                     .construct();
                 // assert
                 expect(expected).to.equal(sut.app);
+            });
+        });
+        describe('importer', () => {
+            it('set as expected class', () => {
+                // arrange
+                const expected = ObservableContextImporter;
+                // act
+                const sut = new ObservableApplicationContextFactory()
+                    .construct();
+                // assert
+                expect(sut.importer).to.be.instanceOf(expected);
             });
         });
     });

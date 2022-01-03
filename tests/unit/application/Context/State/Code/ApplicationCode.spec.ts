@@ -13,12 +13,14 @@ import { ScriptingDefinitionStub } from '@tests/unit/stubs/ScriptingDefinitionSt
 import { CategoryStub } from '@tests/unit/stubs/CategoryStub';
 import { ScriptStub } from '@tests/unit/stubs/ScriptStub';
 import { CategoryCollectionStub } from '@tests/unit/stubs/CategoryCollectionStub';
+import { IUserSelection } from '@/application/Context/State/Selection/IUserSelection';
+import { IReadOnlyApplicationContext } from '@/application/Context/IApplicationContext';
 
 describe('ApplicationCode', () => {
     describe('ctor', () => {
         it('empty when selection is empty', () => {
             // arrange
-            const selection = new UserSelection(new CategoryCollectionStub(), []);
+            const selection: IUserSelection = new UserSelection(new CategoryCollectionStub(), []);
             const definition = new ScriptingDefinitionStub();
             const sut = new ApplicationCode(selection, definition);
             // act
@@ -30,7 +32,8 @@ describe('ApplicationCode', () => {
             // arrange
             const scripts = [new ScriptStub('first'), new ScriptStub('second')];
             const collection = new CategoryCollectionStub().withAction(new CategoryStub(1).withScripts(...scripts));
-            const selection = new UserSelection(collection, scripts.map((script) => script.toSelectedScript()));
+            const selection: IUserSelection = new UserSelection(
+                collection, scripts.map((script) => script.toSelectedScript()));
             const definition = new ScriptingDefinitionStub();
             const expected: IUserScript = {
                 code: 'expected-code',
@@ -53,12 +56,12 @@ describe('ApplicationCode', () => {
                 const scripts = [new ScriptStub('first'), new ScriptStub('second')];
                 const collection = new CategoryCollectionStub().withAction(new CategoryStub(1).withScripts(...scripts));
                 const scriptsToSelect = scripts.map((script) => new SelectedScript(script, false));
-                const selection = new UserSelection(collection, scriptsToSelect);
+                const selection: IUserSelection = new UserSelection(collection, scriptsToSelect);
                 const definition = new ScriptingDefinitionStub();
                 const sut = new ApplicationCode(selection, definition);
                 sut.changed.on((code) => signaled = code);
                 // act
-                selection.changed.notify([]);
+                selection.deselectAll();
                 // assert
                 expect(signaled.code).to.have.lengthOf(0);
                 expect(signaled.code).to.equal(sut.current);
@@ -69,12 +72,12 @@ describe('ApplicationCode', () => {
                 const scripts = [new ScriptStub('first'), new ScriptStub('second')];
                 const collection = new CategoryCollectionStub().withAction(new CategoryStub(1).withScripts(...scripts));
                 const scriptsToSelect = scripts.map((script) => new SelectedScript(script, false));
-                const selection = new UserSelection(collection, scriptsToSelect);
+                const selection: IUserSelection = new UserSelection(collection, scriptsToSelect);
                 const definition = new ScriptingDefinitionStub();
                 const sut = new ApplicationCode(selection, definition);
                 sut.changed.on((code) => signaled = code);
                 // act
-                selection.changed.notify(scripts.map((s) => new SelectedScript(s, false)));
+                selection.selectOnly(scripts.map((s) => new SelectedScript(s, false)));
                 // assert
                 expect(signaled.code).to.have.length.greaterThan(0);
                 expect(signaled.code).to.equal(sut.current);
@@ -84,8 +87,9 @@ describe('ApplicationCode', () => {
             it('sends scripting definition to generator', () => {
                 // arrange
                 const expectedDefinition = new ScriptingDefinitionStub();
-                const collection = new CategoryCollectionStub();
-                const selection = new UserSelection(collection, []);
+                const scripts = [new ScriptStub('first'), new ScriptStub('second')];
+                const collection = new CategoryCollectionStub().withAction(new CategoryStub(1).withScripts(...scripts));
+                const selection: IUserSelection = new UserSelection(collection, []);
                 const generatorMock: IUserScriptGenerator = {
                     buildCode: (selectedScripts, definition) => {
                         if (definition !== expectedDefinition) {
@@ -100,7 +104,7 @@ describe('ApplicationCode', () => {
                 // tslint:disable-next-line:no-unused-expression
                 new ApplicationCode(selection, expectedDefinition, generatorMock);
                 // act
-                const act = () => selection.changed.notify([]);
+                const act = () => selection.selectOnly(scripts.map((s) => s.toSelectedScript()));
                 // assert
                 expect(act).to.not.throw();
             });
@@ -110,9 +114,10 @@ describe('ApplicationCode', () => {
                 const scripts = [new ScriptStub('first'), new ScriptStub('second')];
                 const collection = new CategoryCollectionStub().withAction(new CategoryStub(1).withScripts(...scripts));
                 const scriptsToSelect = scripts.map((script) => new SelectedScript(script, false));
-                const selection = new UserSelection(collection, scriptsToSelect);
+                const selection: IUserSelection = new UserSelection(collection, scriptsToSelect);
                 const generatorMock: IUserScriptGenerator = {
-                    buildCode: (selectedScripts) => {
+                    buildCode: (userSelection) => {
+                        const selectedScripts = userSelection.selectedScripts;
                         if (JSON.stringify(selectedScripts) !== JSON.stringify(scriptsToSelect)) {
                             throw new Error('Unexpected scripts');
                         }
@@ -125,7 +130,7 @@ describe('ApplicationCode', () => {
                 // tslint:disable-next-line:no-unused-expression
                 new ApplicationCode(selection, expectedDefinition, generatorMock);
                 // act
-                const act = () => selection.changed.notify(scriptsToSelect);
+                const act = () => selection.selectOnly(scriptsToSelect);
                 // assert
                 expect(act).to.not.throw();
             });
@@ -136,7 +141,7 @@ describe('ApplicationCode', () => {
                 const collection = new CategoryCollectionStub()
                     .withAction(new CategoryStub(1).withScripts(...scripts));
                 const scriptsToSelect = scripts.map((script) => new SelectedScript(script, false));
-                const selection = new UserSelection(collection, scriptsToSelect);
+                const selection: IUserSelection = new UserSelection(collection, scriptsToSelect);
                 const scriptingDefinition = new ScriptingDefinitionStub();
                 const totalLines = 20;
                 const expected = new Map<SelectedScript, ICodePosition>(
@@ -156,7 +161,7 @@ describe('ApplicationCode', () => {
                 const sut = new ApplicationCode(selection, scriptingDefinition, generatorMock);
                 sut.changed.on((code) => signaled = code);
                 // act
-                selection.changed.notify(scriptsToSelect);
+                selection.selectOnly(scriptsToSelect);
                 // assert
                 expect(signaled.getScriptPositionInCode(scripts[0]))
                     .to.deep.equal(expected.get(scriptsToSelect[0]));
@@ -179,9 +184,9 @@ class UserScriptGeneratorMock implements IUserScriptGenerator {
         this.prePlanned.set(parameters, result);
         return this;
     }
-    public buildCode(
-        selectedScripts: readonly SelectedScript[],
-        scriptingDefinition: IScriptingDefinition): IUserScript {
+    public buildCode(context: IReadOnlyApplicationContext): IUserScript {
+        const selectedScripts = context.state.selection.selectedScripts;
+        const scriptingDefinition = context.app.getCollection(context.state.os).scripting;
         for (const [parameters, result] of Array.from(this.prePlanned)) {
             if (selectedScripts === parameters.scripts
                 && scriptingDefinition === parameters.definition) {
